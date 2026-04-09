@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+
+# Build & Distribution
+build/
+dist/
+*.spec
+
+# Environment
+.env
+venv/
+.venv/
+
+# Logs & Runtime config
+logs/*.log
+config.json
+
+# Docs (local reference material)
+docs/
+
+# Binaries
+*.exe
+
+# IDE & Tools
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Claude Code local config
+.claude/
