@@ -1,6 +1,11 @@
-[Project Banner / Logo Placeholder]
-
 # Arch-Ive by SYMETRA
+
+[![GitHub](https://img.shields.io/badge/GitHub-weedorpy%2Farch--ive--gestor-181717?logo=github)](https://github.com/weedorpy/arch-ive-gestor)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776ab?logo=python)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+
+Herramienta profesional para respaldo incremental y detección de archivos duplicados en entornos CDE.  
+*Professional backup and duplicate file detection tool for CDE environments.*
 
 ## Espanol
 **Arch-Ive by SYMETRA**  
@@ -110,4 +115,39 @@ pip install pyinstaller
 pyinstaller --onefile --windowed --name ArchIve_SYMETRA main.py
 ```
 
-Created by Gabriel Duarte Viera with the assistance of Claude (Anthropic) — Made with love. ❤️
+## Setup & Installation
+
+### Requirements
+- Python 3.11+
+- Robocopy (Windows native)
+- tkinter (included with Python)
+
+### Quick Start
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the application
+python main.py
+```
+
+### Build Executable
+```bash
+pip install pyinstaller
+pyinstaller --onefile --windowed --name ArchIve_SYMETRA main.py
+# Output: dist/ArchIve_SYMETRA.exe
+```
+
+---
+
+## Contributors
+
+**Made by:** Gabriel Duarte Viera
+
+**With AI Assistance:**
+- [Claude](https://claude.ai/) (Anthropic) — Architecture, feature design, debugging
+- [Codex](https://openai.com/blog/openai-codex/) — Code generation and optimization
+
+---
+
+Created with ❤️ by Gabriel Duarte Viera
