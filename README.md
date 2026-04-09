@@ -5,125 +5,50 @@
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 Herramienta profesional para respaldo incremental y detección de archivos duplicados en entornos CDE.  
-*Professional backup and duplicate file detection tool for CDE environments.*
+*Professional backup and duplicate file detection tool for CDE environments.*  
+*Ferramenta para backup incremental de ambientes CDE e localização de arquivos duplicados.*
 
-## Espanol
-**Arch-Ive by SYMETRA**  
-Herramienta para respaldo incremental de entornos CDE y deteccion de archivos duplicados, disenada para ofrecer control operativo, visibilidad del proceso y una experiencia clara para el usuario.
+---
 
-### Caracteristicas
-- Respaldo incremental mediante Robocopy con rangos de dias seleccionables: 7 / 15 / 30 / 60
-- Seleccion de carpetas de origen y destino sin letras de unidad fijas
-- Vista previa `Dry Run` antes de ejecutar el proceso
-- Registro de progreso en tiempo real
-- Configuracion persistente que guarda las ultimas rutas y la fecha del ultimo respaldo
-- Buscador de archivos duplicados por mismo nombre y mismo tamano
-- Grupos tipo acordeon colapsables con seleccion mediante casillas
-- Eliminacion de duplicados con confirmacion
-- Apertura de la ubicacion del archivo en el Explorador de Windows
-- Calculadora de espacio recuperable
-- Ordenacion por tamano o por cantidad de copias
-- Identidad visual oscura de SYMETRA: Carbon Black + Gold
+## ✨ Características | Features | Recursos
 
-### Stack Tecnologico
-- Python
-- tkinter
-- Robocopy
-- PyInstaller
+- **Respaldo incremental** via Robocopy con rangos de días seleccionables: 7 / 15 / 30 / 60
+- **Vista previa `Dry Run`** antes de ejecutar el proceso
+- **Registro de progreso** en tiempo real
+- **Configuración persistente** que guarda rutas y fecha del último respaldo
+- **Detector de duplicados** por nombre y tamaño idénticos
+- **Grupos colapsables** tipo acordeón con selección por checkbox
+- **Eliminación segura** de duplicados con confirmación
+- **Calculadora de espacio** recuperable
+- **Identidad visual SYMETRA**: Carbon Black `#111111` + Gold `#C6A85E`
 
-### Como ejecutar
-```bash
-cd symetra_backup
-python main.py
-```
+---
 
-### Como generar el `.exe`
-```bash
-pip install pyinstaller
-pyinstaller --onefile --windowed --name ArchIve_SYMETRA main.py
-```
+## 🛠️ Tech Stack
 
-## English
-**Arch-Ive by SYMETRA**  
-Tool for incremental CDE backup and duplicate file detection, built to provide operational control, process visibility, and a clean desktop workflow.
+| Componente | Descripción |
+|-----------|------------|
+| **Backend** | Python 3.11+ |
+| **UI** | tkinter (nativa) |
+| **Backup Engine** | Robocopy (Windows) |
+| **Packaging** | PyInstaller |
 
-### Features
-- Incremental backup via Robocopy with selectable day ranges: 7 / 15 / 30 / 60
-- Source and destination folder selection with no fixed drive letters
-- `Dry Run` preview before execution
-- Real-time progress log
-- Persistent configuration that saves the last paths and backup date
-- Duplicate file finder based on same name and same size
-- Collapsible accordion groups with checkbox selection
-- Duplicate deletion with confirmation
-- Open file location in Explorer
-- Recoverable space calculator
-- Sort by size or by copy count
-- SYMETRA dark branding: Carbon Black + Gold
+---
 
-### Tech Stack
-- Python
-- tkinter
-- Robocopy
-- PyInstaller
-
-### How to Run
-```bash
-cd symetra_backup
-python main.py
-```
-
-### How to Build the `.exe`
-```bash
-pip install pyinstaller
-pyinstaller --onefile --windowed --name ArchIve_SYMETRA main.py
-```
-
-## Portugues
-**Arch-Ive by SYMETRA**  
-Ferramenta para backup incremental de ambientes CDE e localizacao de arquivos duplicados, desenvolvida para oferecer controle operacional, visibilidade do processo e uma experiencia de uso objetiva.
-
-### Recursos
-- Backup incremental via Robocopy com faixas de dias selecionaveis: 7 / 15 / 30 / 60
-- Selecao de pastas de origem e destino sem letras de unidade fixas
-- Pre-visualizacao em `Dry Run` antes da execucao
-- Log de progresso em tempo real
-- Configuracao persistente que salva os ultimos caminhos e a data do ultimo backup
-- Localizador de arquivos duplicados por mesmo nome e mesmo tamanho
-- Grupos em acordeao recolhiveis com selecao por checkbox
-- Exclusao de duplicados com confirmacao
-- Abertura da localizacao do arquivo no Explorer
-- Calculadora de espaco recuperavel
-- Ordenacao por tamanho ou quantidade de copias
-- Identidade visual escura da SYMETRA: Carbon Black + Gold
-
-### Stack Tecnologica
-- Python
-- tkinter
-- Robocopy
-- PyInstaller
-
-### Como executar
-```bash
-cd symetra_backup
-python main.py
-```
-
-### Como gerar o `.exe`
-```bash
-pip install pyinstaller
-pyinstaller --onefile --windowed --name ArchIve_SYMETRA main.py
-```
-
-## Setup & Installation
+## 📦 Installation & Setup
 
 ### Requirements
+- Windows 10+
 - Python 3.11+
-- Robocopy (Windows native)
-- tkinter (included with Python)
+- Robocopy (incluido en Windows)
 
 ### Quick Start
+
 ```bash
+# Clone the repository
+git clone https://github.com/weedorpy/arch-ive-gestor.git
+cd arch-ive-gestor
+
 # Install dependencies
 pip install -r requirements.txt
 
@@ -132,22 +57,45 @@ python main.py
 ```
 
 ### Build Executable
+
 ```bash
+# Install PyInstaller
 pip install pyinstaller
+
+# Generate .exe (one-file, windowed)
 pyinstaller --onefile --windowed --name ArchIve_SYMETRA main.py
-# Output: dist/ArchIve_SYMETRA.exe
+
+# Output location: dist/ArchIve_SYMETRA.exe
 ```
 
 ---
 
-## Contributors
+## 📂 Project Structure
 
-**Made by:** Gabriel Duarte Viera
-
-**With AI Assistance:**
-- [Claude](https://claude.ai/) (Anthropic) — Architecture, feature design, debugging
-- [Codex](https://openai.com/blog/openai-codex/) — Code generation and optimization
+```
+arch-ive-gestor/
+├── main.py                 # Entry point
+├── ui.py                   # Tkinter UI
+├── backup_engine.py        # Robocopy wrapper
+├── duplicate_finder.py     # Duplicate detection logic
+├── duplicates_tab.py       # Duplicates UI tab
+├── config.py               # Configuration management
+├── requirements.txt        # Python dependencies
+├── assets/                 # Icons and images (if any)
+├── logs/                   # Runtime logs
+└── docs/                   # Documentation (gitignored)
+```
 
 ---
 
-Created with ❤️ by Gabriel Duarte Viera
+## 🤝 Contributors
+
+**Created by:** Gabriel Duarte Viera
+
+**With AI Assistance:**
+- [Claude](https://claude.ai/) (Anthropic) — Architecture, design, debugging
+- [Codex](https://openai.com/blog/openai-codex/) — Code generation & optimization
+
+---
+
+Made with ❤️ by Gabriel Duarte Viera
