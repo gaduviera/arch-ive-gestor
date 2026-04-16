@@ -4,12 +4,14 @@ import os
 from datetime import datetime
 from pathlib import Path
 
+from paths import BACKUP_HISTORY_FILE
+
 
 class BackupHistoryManager:
     """Append-only JSON log of backup events."""
 
-    def __init__(self, log_path: str = "logs/backup_history.json"):
-        self.log_path = log_path
+    def __init__(self, log_path=None):
+        self.log_path = Path(log_path) if log_path else BACKUP_HISTORY_FILE
         self._history: list[dict] = self._load()
 
     def _load(self) -> list[dict]:

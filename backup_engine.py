@@ -3,9 +3,7 @@ import threading
 from datetime import datetime
 from pathlib import Path
 
-
-LOGS_DIR = Path(__file__).parent / "logs"
-LOGS_DIR.mkdir(exist_ok=True)
+from paths import LOGS_DIR
 
 
 def build_robocopy_cmd(source: str, dest: str, days: int, dry_run: bool = False) -> list[str]:

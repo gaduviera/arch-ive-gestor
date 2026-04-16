@@ -2,7 +2,7 @@ import json
 import os
 from pathlib import Path
 
-CONFIG_FILE = Path(__file__).parent / "config.json"
+from paths import CONFIG_FILE
 
 DEFAULT_CONFIG = {
     "source_path": "",
