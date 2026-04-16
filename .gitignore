@@ -13,8 +13,12 @@ dist/
 *.spec
 !ArchIve.spec
 
-# Installer output (generated artifacts)
+# Installer output (generated .exe, never commit binaries)
 installer/output/
+
+# PyInstaller runtime
+*.manifest
+warn-*.txt
 
 # Environment
 .env
