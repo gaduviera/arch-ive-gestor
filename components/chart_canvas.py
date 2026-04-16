@@ -34,7 +34,7 @@ class BarChart(tk.Canvas):
         padding_top = 10
         padding_bottom = 30
         n = len(self.data)
-        max_val = max(self.data) if self.data else 1
+        max_val = max(self.data) if self.data and max(self.data) > 0 else 1
         usable_width = canvas_width - 2 * padding_x
         slot_width = usable_width / n
         bar_width = slot_width * 0.7
