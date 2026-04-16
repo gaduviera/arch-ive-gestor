@@ -1,12 +1,12 @@
-# Arch-Ive — Gestor de Copias de Seguridad | Backup Manager
+# Arch-Ive by SYMETRA — Gestor de Copias de Seguridad | Backup Manager
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776ab?logo=python)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![GitHub](https://img.shields.io/badge/GitHub-gaduviera%2Farch--ive--gestor-181717?logo=github)](https://github.com/gaduviera/arch-ive-gestor)
 
-Arch-Ive es una aplicación de escritorio para Windows que simplifica y potencia tus tareas de respaldo de archivos. Utiliza el motor nativo Robocopy, ofrece un diseño moderno con efectos glassmorphism y una pestaña completa de análisis e informes.
+**Arch-Ive by SYMETRA** es una aplicación de escritorio para Windows que simplifica y potencia tus tareas de respaldo de archivos. Utiliza el motor nativo Robocopy, ofrece un diseño moderno con efectos glassmorphism y una pestaña completa de análisis e informes.
 
-*Arch-Ive is a Windows desktop application that simplifies and enhances your file backup tasks. It leverages the native Robocopy engine, features a modern glassmorphism design, and includes a full reports & analytics tab.*
+***Arch-Ive by SYMETRA** is a Windows desktop application that simplifies and enhances your file backup tasks. It leverages the native Robocopy engine, features a modern glassmorphism design, and includes a full reports & analytics tab.*
 
 ---
 
