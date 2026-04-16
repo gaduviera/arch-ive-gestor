@@ -11,6 +11,10 @@ __pycache__/
 build/
 dist/
 *.spec
+!ArchIve.spec
+
+# Installer output (generated artifacts)
+installer/output/
 
 # Environment
 .env
