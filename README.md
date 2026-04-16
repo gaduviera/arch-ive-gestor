@@ -1,91 +1,112 @@
-# Arch-Ive by SYMETRA
+# Arch-Ive — Gestor de Copias de Seguridad | Backup Manager
 
-[![GitHub](https://img.shields.io/badge/GitHub-weedorpy%2Farch--ive--gestor-181717?logo=github)](https://github.com/weedorpy/arch-ive-gestor)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776ab?logo=python)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![GitHub](https://img.shields.io/badge/GitHub-gaduviera%2Farch--ive--gestor-181717?logo=github)](https://github.com/gaduviera/arch-ive-gestor)
 
-Herramienta profesional para respaldo incremental y detección de archivos duplicados en entornos CDE.  
-*Professional backup and duplicate file detection tool for CDE environments.*  
-*Ferramenta para backup incremental de ambientes CDE e localização de arquivos duplicados.*
+Arch-Ive es una aplicación de escritorio para Windows que simplifica y potencia tus tareas de respaldo de archivos. Utiliza el motor nativo Robocopy, ofrece un diseño moderno con efectos glassmorphism y una pestaña completa de análisis e informes.
+
+*Arch-Ive is a Windows desktop application that simplifies and enhances your file backup tasks. It leverages the native Robocopy engine, features a modern glassmorphism design, and includes a full reports & analytics tab.*
 
 ---
 
-## ✨ Características | Features | Recursos
+## ✨ Características | Features
 
-- **Respaldo incremental** via Robocopy con rangos de días seleccionables: 7 / 15 / 30 / 60
-- **Vista previa `Dry Run`** antes de ejecutar el proceso
-- **Registro de progreso** en tiempo real
-- **Configuración persistente** que guarda rutas y fecha del último respaldo
-- **Detector de duplicados** por nombre y tamaño idénticos
-- **Grupos colapsables** tipo acordeón con selección por checkbox
-- **Eliminación segura** de duplicados con confirmación
-- **Calculadora de espacio** recuperable
-- **Identidad visual SYMETRA**: Carbon Black `#111111` + Gold `#C6A85E`
+- **Copias de seguridad incrementales** via Robocopy con rangos seleccionables: 7 / 15 / 30 / 60 días
+- **Modo Dry Run** — vista previa antes de ejecutar cualquier operación
+- **Registro en tiempo real** del progreso de cada respaldo
+- **Configuración persistente** — guarda rutas y fecha del último respaldo
+- **Diseño glassmorphism** — paneles translúcidos con efectos de cristal esmerilado y acentos dorados
+- **Gráficos integrados** — BarChart y LineChart con gradientes para visualizar tendencias
+- **Detector de duplicados** — por nombre y tamaño idénticos, con grupos colapsables y checkbox
+- **Eliminación segura** de duplicados con confirmación previa
+- **Calculadora de espacio recuperable**
+
+---
+
+## 📊 Informes y Analíticas | Reports & Analytics
+
+La pestaña **Reportes** ofrece una visión completa del historial de respaldos:
+
+- **Mapa de calor mensual** — visualiza qué días del mes se hicieron respaldos
+- **Totales anuales** — gráfico de barras con conteo por mes
+- **Comparación de períodos** — compara dos rangos de fechas con delta porcentual
+- **Exportación en PDF, CSV y JSON** — descarga el historial completo en el formato que prefieras
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Componente | Descripción |
-|-----------|------------|
+| Componente | Detalle |
+|-----------|---------|
 | **Backend** | Python 3.11+ |
-| **UI** | tkinter (nativa) |
-| **Backup Engine** | Robocopy (Windows) |
+| **UI** | tkinter (nativa) + Pillow (efectos glassmorphism) |
+| **Backup Engine** | Robocopy (incluido en Windows) |
+| **Reports** | reportlab (PDF, opcional) |
 | **Packaging** | PyInstaller |
 
 ---
 
-## 📦 Installation & Setup
+## 📦 Instalación | Installation
 
-### Requirements
-- Windows 10+
+### Requisitos | Requirements
+- Windows 10 / 11
 - Python 3.11+
-- Robocopy (incluido en Windows)
+- Robocopy (incluido en Windows por defecto)
 
 ### Quick Start
 
 ```bash
-# Clone the repository
-git clone https://github.com/weedorpy/arch-ive-gestor.git
+# Clonar el repositorio
+git clone https://github.com/gaduviera/arch-ive-gestor.git
 cd arch-ive-gestor
 
-# Install dependencies
+# Instalar dependencias
 pip install -r requirements.txt
 
-# Run the application
+# Ejecutar la aplicación
 python main.py
 ```
 
-### Build Executable
+### Compilar ejecutable | Build Executable
 
 ```bash
-# Install PyInstaller
 pip install pyinstaller
-
-# Generate .exe (one-file, windowed)
-pyinstaller --onefile --windowed --name ArchIve_SYMETRA main.py
-
-# Output location: dist/ArchIve_SYMETRA.exe
+pyinstaller --onefile --windowed --name ArchIve main.py
+# Resultado: dist/ArchIve.exe
 ```
 
 ---
 
-## 📂 Project Structure
+## 📂 Estructura del Proyecto | Project Structure
 
 ```
 arch-ive-gestor/
-├── main.py                 # Entry point
-├── ui.py                   # Tkinter UI
-├── backup_engine.py        # Robocopy wrapper
-├── duplicate_finder.py     # Duplicate detection logic
-├── duplicates_tab.py       # Duplicates UI tab
-├── config.py               # Configuration management
-├── requirements.txt        # Python dependencies
-├── assets/                 # Icons and images (if any)
-├── logs/                   # Runtime logs
-└── docs/                   # Documentation (gitignored)
+├── main.py                # Punto de entrada
+├── ui.py                  # UI principal (tkinter)
+├── backup_engine.py       # Wrapper de Robocopy
+├── duplicate_finder.py    # Lógica de detección de duplicados
+├── duplicates_tab.py      # Pestaña de duplicados
+├── config.py              # Gestión de configuración
+├── theme.py               # Paleta y utilidades de color
+├── reports_engine.py      # Motor de historial e informes
+├── reports_tab.py         # Pestaña de Reportes
+├── reports_ui.py          # Componentes visuales de informes
+├── export_csv.py          # Exportador CSV
+├── export_json.py         # Exportador JSON
+├── export_pdf.py          # Exportador PDF
+├── requirements.txt
+├── assets/
+│   └── mesh_grain.png
+├── components/
+│   ├── frost_card.py      # Panel glassmorphism
+│   ├── glass_button.py    # Botón con gradiente
+│   ├── glass_input.py     # Input estilizado
+│   └── chart_canvas.py    # Gráficos BarChart / LineChart
+├── tests/                 # 78 tests unitarios
+└── logs/                  # Logs de runtime (gitignored)
 ```
 
 ---
 
-Made with ❤️ by Gabriel Duarte Viera
+Made with ❤️ by [Gabriel Duarte Viera](https://github.com/gaduviera)
