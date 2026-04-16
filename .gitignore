@@ -3,7 +3,9 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.eggs/
 *.egg-info/
+.pytest_cache/
 
 # Build & Distribution
 build/
@@ -17,6 +19,7 @@ venv/
 
 # Logs & Runtime config
 logs/*.log
+logs/backup_history.json
 config.json
 
 # Docs (local reference material)

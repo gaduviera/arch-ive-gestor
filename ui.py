@@ -6,15 +6,18 @@ from pathlib import Path
 from config import load_config, save_config
 from backup_engine import run_backup
 from duplicates_tab import DuplicatesTab
+from theme import COLORS
+from reports_engine import BackupHistoryManager, ReportsCalculator
+from reports_tab import ReportsTab
 
-# ── Branding SYMETRA ──────────────────────────────────────────────────────────
-C_BG      = "#111111"
-C_PANEL   = "#1A1A1A"
-C_GOLD    = "#C6A85E"
-C_TEXT    = "#F5F5F5"
-C_MUTED   = "#888888"
-C_SUCCESS = "#4CAF50"
-C_ERROR   = "#E53935"
+# ── Branding SYMETRA (sourced from theme.py) ──────────────────────────────────
+C_BG      = COLORS["carbon_base"]
+C_PANEL   = COLORS["carbon_elevated"]
+C_GOLD    = COLORS["gold_primary"]
+C_TEXT    = COLORS["platinum"]
+C_MUTED   = COLORS["silver"]
+C_SUCCESS = COLORS["success"]
+C_ERROR   = COLORS["error"]
 
 FONT_TITLE = ("Segoe UI", 14, "bold")
 FONT_LABEL = ("Segoe UI", 9)
@@ -29,6 +32,8 @@ class App(tk.Tk):
         super().__init__()
         self.cfg = load_config()
         self._thread = None
+        self._history = BackupHistoryManager()
+        self._calculator = ReportsCalculator(self._history)
 
         self.title("Arch-Ive by SYMETRA — CDE Backup Tool")
         self.configure(bg=C_BG)
@@ -56,7 +61,7 @@ class App(tk.Tk):
         self._tab_frames = {}
         self._tab_btns   = {}
 
-        for name, label in [("backup", "Backup Incremental"), ("duplicados", "Duplicados")]:
+        for name, label in [("backup", "Backup Incremental"), ("duplicados", "Duplicados"), ("reportes", "Reportes")]:
             btn = tk.Button(
                 tab_bar, text=label,
                 font=FONT_BTN, relief="flat", bd=0,
@@ -72,6 +77,11 @@ class App(tk.Tk):
 
         self._tab_frames["backup"]     = self._build_backup_tab(content)
         self._tab_frames["duplicados"] = DuplicatesTab(content)
+        self._tab_frames["reportes"]   = ReportsTab(
+            content,
+            history_manager=self._history,
+            calculator=self._calculator,
+        )
 
         for frame in self._tab_frames.values():
             frame.place(relx=0, rely=0, relwidth=1, relheight=1)
