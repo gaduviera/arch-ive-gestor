@@ -6,15 +6,16 @@ from pathlib import Path
 from config import load_config, save_config
 from backup_engine import run_backup
 from duplicates_tab import DuplicatesTab
+from theme import COLORS
 
-# ── Branding SYMETRA ──────────────────────────────────────────────────────────
-C_BG      = "#111111"
-C_PANEL   = "#1A1A1A"
-C_GOLD    = "#C6A85E"
-C_TEXT    = "#F5F5F5"
-C_MUTED   = "#888888"
-C_SUCCESS = "#4CAF50"
-C_ERROR   = "#E53935"
+# ── Branding SYMETRA (sourced from theme.py) ──────────────────────────────────
+C_BG      = COLORS["carbon_base"]
+C_PANEL   = COLORS["carbon_elevated"]
+C_GOLD    = COLORS["gold_primary"]
+C_TEXT    = COLORS["platinum"]
+C_MUTED   = COLORS["silver"]
+C_SUCCESS = COLORS["success"]
+C_ERROR   = COLORS["error"]
 
 FONT_TITLE = ("Segoe UI", 14, "bold")
 FONT_LABEL = ("Segoe UI", 9)
