@@ -50,3 +50,6 @@ Thumbs.db
 
 # Git worktrees
 .worktrees/
+
+# Gemini/Claude instructions
+CLAUDE.md
