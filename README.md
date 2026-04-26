@@ -1,3 +1,4 @@
+<img width="1774" height="887" alt="image" src="https://github.com/user-attachments/assets/917a4376-3ca1-4790-abb5-9cddc2d619d2" />
 # Arch-Ive by SYMETRA — Gestor de Copias de Seguridad | Backup Manager
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776ab?logo=python)](https://www.python.org/)
