@@ -30,8 +30,6 @@ logs/*.log
 logs/backup_history.json
 config.json
 
-# Docs (local reference material)
-docs/
 
 # Binaries
 *.exe
