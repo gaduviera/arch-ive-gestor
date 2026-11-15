@@ -1,113 +1,113 @@
 <img width="1774" height="887" alt="image" src="https://github.com/user-attachments/assets/917a4376-3ca1-4790-abb5-9cddc2d619d2" />
-# Arch-Ive by SYMETRA — Gestor de Copias de Seguridad | Backup Manager
+# Arch-Ive by SYMETRA — Espejos de carpetas | Folder Mirrors
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776ab?logo=python)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![GitHub](https://img.shields.io/badge/GitHub-gaduviera%2Farch--ive--gestor-181717?logo=github)](https://github.com/gaduviera/arch-ive-gestor)
 
-**Arch-Ive by SYMETRA** es una aplicación de escritorio para Windows que simplifica y potencia tus tareas de respaldo de archivos. Utiliza el motor nativo Robocopy, ofrece un diseño moderno con efectos glassmorphism y una pestaña completa de análisis e informes.
+**Arch-Ive** copia carpetas en otras carpetas y las mantiene al día, pensado para bases
+grandes y vivas (por ejemplo un CDE de cientos de GB en Google Drive → disco externo).
+Cada par origen → destino es un **espejo**. En cada corrida compara las dos carpetas y
+detecta qué es nuevo, qué cambió, qué se **movió o renombró** y qué se borró. Nunca pierde
+nada: lo que sale del destino va a `_archivo/<fecha>/`.
 
-***Arch-Ive by SYMETRA** is a Windows desktop application that simplifies and enhances your file backup tasks. It leverages the native Robocopy engine, features a modern glassmorphism design, and includes a full reports & analytics tab.*
-
----
-
-## ✨ Características | Features
-
-- **Copias de seguridad incrementales** via Robocopy con rangos seleccionables: 7 / 15 / 30 / 60 días
-- **Modo Dry Run** — vista previa antes de ejecutar cualquier operación
-- **Registro en tiempo real** del progreso de cada respaldo
-- **Configuración persistente** — guarda rutas y fecha del último respaldo
-- **Diseño glassmorphism** — paneles translúcidos con efectos de cristal esmerilado y acentos dorados
-- **Gráficos integrados** — BarChart y LineChart con gradientes para visualizar tendencias
-- **Detector de duplicados** — por nombre y tamaño idénticos, con grupos colapsables y checkbox
-- **Eliminación segura** de duplicados con confirmación previa
-- **Calculadora de espacio recuperable**
+*Arch-Ive keeps folder pairs in sync on Windows. It detects new, modified, moved/renamed
+and deleted files, moves instead of re-copying, and archives instead of deleting.*
 
 ---
 
-## 📊 Informes y Analíticas | Reports & Analytics
+## Cómo se usa | How it works
 
-La pestaña **Reportes** ofrece una visión completa del historial de respaldos:
+1. **Nuevo espejo** → nombre, carpeta origen, carpeta destino, modo.
+2. **Analizar** → ves cuántos archivos son nuevos, modificados, movidos o van a archivo,
+   y cuántos GB se copian. **Ver detalle** lista cada archivo.
+3. **Sincronizar** → aplica el plan. Confirma antes, con avisos si algo parece raro.
+4. Repite para cada par. Los espejos **fijados** se analizan y sincronizan juntos con
+   **Analizar fijados**.
 
-- **Mapa de calor mensual** — visualiza qué días del mes se hicieron respaldos
-- **Totales anuales** — gráfico de barras con conteo por mes
-- **Comparación de períodos** — compara dos rangos de fechas con delta porcentual
-- **Exportación en PDF, CSV y JSON** — descarga el historial completo en el formato que prefieras
+| Qué pasó en el origen | Qué hace el destino |
+|---|---|
+| Archivo nuevo | Se copia |
+| Archivo modificado | La versión vieja va a `_archivo/<fecha>/`, se copia la nueva |
+| Archivo movido o renombrado | Se mueve dentro del destino, **sin volver a copiarlo** |
+| Archivo borrado | Modo *Espejo*: va a `_archivo/<fecha>/`. Modo *Solo agregar*: se queda |
+
+### Modos
+
+- **Espejo** — el destino queda igual al origen; todo lo que sale va a `_archivo/`.
+- **Solo agregar** — copia nuevos y modificados, nunca saca del destino lo borrado en el origen.
+
+### Protecciones
+
+- Origen desconectado o vacío → no se analiza (no marca todo como borrado).
+- Carpetas del origen sin permiso de lectura → sus archivos en destino no se tocan.
+- Más del 30 % del destino iría a `_archivo/` → confirmación extra.
+- Falta espacio en destino → no arranca.
+- Copias a archivo temporal + renombrado: un corte nunca deja archivos a medias.
+- Un movido se reconoce por tamaño + fecha de modificación (±2 s). Si hay ambigüedad,
+  no adivina: copia y archiva.
+
+### Otras pestañas
+
+- **Duplicados** — busca archivos con mismo nombre y tamaño en una carpeta.
+- **Reportes** — historial de sincronizaciones: actividad mensual, totales, export CSV/JSON/PDF.
 
 ---
 
-## 🛠️ Tech Stack
+## Instalación | Installation
 
-| Componente | Detalle |
-|-----------|---------|
-| **Backend** | Python 3.11+ |
-| **UI** | tkinter (nativa) + Pillow (efectos glassmorphism) |
-| **Backup Engine** | Robocopy (incluido en Windows) |
-| **Reports** | reportlab (PDF, opcional) |
-| **Packaging** | PyInstaller |
-
----
-
-## 📦 Instalación | Installation
-
-### Requisitos | Requirements
-- Windows 10 / 11
-- Python 3.11+
-- Robocopy (incluido en Windows por defecto)
-
-### Quick Start
+Requisitos: Windows 10/11, Python 3.11+. Sin dependencias externas para la app
+(`reportlab` opcional para exportar PDF).
 
 ```bash
-# Clonar el repositorio
 git clone https://github.com/gaduviera/arch-ive-gestor.git
 cd arch-ive-gestor
-
-# Instalar dependencias
-pip install -r requirements.txt
-
-# Ejecutar la aplicación
 python main.py
 ```
 
-### Compilar ejecutable | Build Executable
+Tests:
+
+```bash
+pip install pytest
+python -m pytest
+```
+
+Ejecutable:
 
 ```bash
 pip install pyinstaller
-pyinstaller --onefile --windowed --name ArchIve main.py
-# Resultado: dist/ArchIve.exe
+pyinstaller ArchIve.spec --noconfirm
 ```
+
+Datos de usuario en `%APPDATA%\Arch-Ive\` (`mirrors.json`, `logs/`).
 
 ---
 
-## 📂 Estructura del Proyecto | Project Structure
+## Estructura | Project Structure
 
 ```
 arch-ive-gestor/
-├── main.py                # Punto de entrada
-├── ui.py                  # UI principal (tkinter)
-├── backup_engine.py       # Wrapper de Robocopy
-├── duplicate_finder.py    # Lógica de detección de duplicados
-├── duplicates_tab.py      # Pestaña de duplicados
-├── config.py              # Gestión de configuración
-├── theme.py               # Paleta y utilidades de color
-├── reports_engine.py      # Motor de historial e informes
-├── reports_tab.py         # Pestaña de Reportes
-├── reports_ui.py          # Componentes visuales de informes
-├── export_csv.py          # Exportador CSV
-├── export_json.py         # Exportador JSON
-├── export_pdf.py          # Exportador PDF
-├── requirements.txt
-├── assets/
-│   └── mesh_grain.png
-├── components/
-│   ├── frost_card.py      # Panel glassmorphism
-│   ├── glass_button.py    # Botón con gradiente
-│   ├── glass_input.py     # Input estilizado
-│   └── chart_canvas.py    # Gráficos BarChart / LineChart
-├── tests/                 # 78 tests unitarios
-└── logs/                  # Logs de runtime (gitignored)
+├── main.py              # Punto de entrada
+├── core/                # Lógica pura (sin tkinter)
+│   ├── sync.py          # Escanear origen/destino y planificar cambios
+│   ├── executor.py      # Aplicar el plan: mover, archivar, copiar
+│   ├── mirrors.py       # Espejos: guardar, validar, fijar
+│   ├── history.py       # Historial y cálculos de reportes
+│   ├── duplicates.py    # Detector de duplicados
+│   ├── exporters.py     # CSV / JSON / PDF
+│   └── paths.py         # Rutas en %APPDATA%\Arch-Ive
+├── ui/                  # Interfaz tkinter
+│   ├── app.py           # Ventana y pestañas
+│   ├── sync_tab.py      # Pestaña Sincronizar + diálogos
+│   ├── duplicates_tab.py
+│   ├── reports_tab.py
+│   ├── widgets.py       # Heatmap, comparación, gráfico de barras
+│   └── theme.py         # Paleta SYMETRA
+├── tests/
+├── installer/           # Inno Setup
+└── docs/                # Specs y planes
 ```
 
 ---
 
-Made with ❤️ by [Gabriel Duarte Viera](https://github.com/gaduviera)
+Made by [Gabriel Duarte Viera](https://github.com/gaduviera)

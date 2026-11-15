@@ -1,7 +1,4 @@
 # Arch-Ive by SYMETRA — dependencias
-# tkinter viene incluido con Python en Windows, no requiere instalación extra.
-# No hay dependencias externas para el MVP.
-
-# Para empaquetar a .exe:
-#   pip install pyinstaller
-#   pyinstaller --onefile --windowed --name "ArchIve_SYMETRA" --icon=assets/logo.ico main.py
+# La app usa solo la biblioteca estándar (tkinter incluido en Python para Windows).
+# Opcional: reportlab para exportar PDF en Reportes.
+# Desarrollo: pytest. Empaquetado: pyinstaller ArchIve.spec --noconfirm

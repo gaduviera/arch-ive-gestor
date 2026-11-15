@@ -22,7 +22,6 @@ a = Analysis(
     binaries=[],
     datas=[
         (str(project_root / "assets"), "assets"),
-        (str(project_root / "components"), "components"),
     ],
     hiddenimports=hiddenimports,  # Optional runtime deps; keep listed so missing hooks warn instead of surprising at packaging time.
     hookspath=[],

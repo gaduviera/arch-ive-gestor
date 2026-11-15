@@ -3,7 +3,7 @@ import subprocess
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
-from duplicate_finder import DuplicateFinder
+from core.duplicates import DuplicateFinder
 
 C_BG    = "#111111"
 C_PANEL = "#1A1A1A"

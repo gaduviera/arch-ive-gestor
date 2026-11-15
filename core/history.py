@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-from paths import BACKUP_HISTORY_FILE
+from core.paths import BACKUP_HISTORY_FILE
 
 
 class BackupHistoryManager:
