@@ -53,6 +53,19 @@ def test_move_applied_without_copy(tmp_path):
     assert not (dst / "old").exists()  # emptied folder removed
 
 
+def test_case_only_rename_applied_in_place_and_archives_nothing(tmp_path):
+    src, dst = tmp_path / "s", tmp_path / "d"
+    make(src, "sub/leeme.TXT", b"hola", mtime=1_600_000_000)
+    make(dst, "sub/LEEME.txt", b"hola", mtime=1_600_000_000)
+    m = mirror(src, dst)
+    res = execute(analyze(m), m["source"], m["dest"])
+    assert res.moved == 1 and res.copied == 0 and not res.errors
+    assert os.listdir(dst / "sub") == ["leeme.TXT"]  # exact casing, no tmp left
+    assert read(dst / "sub" / "leeme.TXT") == b"hola"
+    assert not (dst / ARCHIVE_DIR).exists()
+    assert analyze(m).is_empty
+
+
 def test_modified_archives_old_version(tmp_path):
     src, dst = tmp_path / "s", tmp_path / "d"
     make(src, "doc.txt", b"version 2", mtime=1_700_000_100)

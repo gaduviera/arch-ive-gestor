@@ -107,12 +107,22 @@ def execute(plan: Plan, source: str, dest: str, on_progress=None, cancel=None) -
             break
         try:
             target = _join(dest, new.rel)
-            if os.path.exists(_long(target)):  # should not happen; never overwrite
-                _move(target, _free_target(_join(archive_root, new.rel)))
-                res.archived += 1
             src_path = _join(dest, old.rel)
-            _move(src_path, target)
-            emptied.add(os.path.dirname(src_path))
+            if old.rel.lower() == new.rel.lower():
+                # Case-only rename: same file on Windows, so go via a temp name (never archive it).
+                tmp = src_path + TMP_SUFFIX
+                _move(src_path, tmp)
+                try:
+                    _move(tmp, target)
+                except OSError:
+                    _move(tmp, src_path)  # put it back under its old name
+                    raise
+            else:
+                if os.path.exists(_long(target)):  # should not happen; never overwrite
+                    _move(target, _free_target(_join(archive_root, new.rel)))
+                    res.archived += 1
+                _move(src_path, target)
+                emptied.add(os.path.dirname(src_path))
             res.moved += 1
         except OSError as exc:
             res.errors.append(f"Mover {old.rel} -> {new.rel}: {exc}")

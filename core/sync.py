@@ -39,6 +39,18 @@ class Plan:
     kept: list[FileInfo] = field(default_factory=list)                   # dest orphans left in place
     unchanged: int = 0
     scan_errors: list[str] = field(default_factory=list)                 # unreadable source folders
+    # new source files that look like several dest orphans (same size+mtime): (source, [dest candidates])
+    ambiguous: list[tuple[FileInfo, list[FileInfo]]] = field(default_factory=list)
+
+    def review_items(self) -> list[tuple[str, FileInfo, FileInfo]]:
+        """Doubtful cases the user should look at first: (kind, source, dest)."""
+        items = [("Modificado", s, d) for s, d in self.modified]
+        items += [("Gemelo", s, o) for s, cands in self.ambiguous for o in cands]
+        return items
+
+    @property
+    def review_count(self) -> int:
+        return len(self.modified) + len(self.ambiguous)
 
     @property
     def bytes_to_copy(self) -> int:
@@ -125,7 +137,11 @@ def build_plan(src: dict[str, FileInfo], dst: dict[str, FileInfo], mode: str = "
         if d is None:
             missing.append(s)
         elif _same(s, d):
-            plan.unchanged += 1
+            # Only the file name's case can be fixed in place; folder casing is left alone.
+            if s.rel.rsplit("/", 1)[-1] != d.rel.rsplit("/", 1)[-1]:
+                plan.moved.append((d, s))
+            else:
+                plan.unchanged += 1
         else:
             plan.modified.append((s, d))
     orphans = [d for key, d in dst.items() if key not in src]
@@ -147,6 +163,7 @@ def build_plan(src: dict[str, FileInfo], dst: dict[str, FileInfo], mode: str = "
             paired.update((m, cs[0]))
 
     plan.new = [m for m in missing if m not in paired]
+    plan.ambiguous = [(m, cand_m[m]) for m in plan.new if cand_m[m]]
     for o in orphans:
         if o in paired:
             continue

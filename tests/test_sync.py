@@ -111,11 +111,45 @@ def test_excludes_apply_both_sides(tmp_path):
 
 
 def test_case_insensitive_match(tmp_path):
+    # Folder casing alone is not a change: nothing to do.
     src, dst = tmp_path / "s", tmp_path / "d"
-    make(src, "Carpeta/Plano.DWG")
-    make(dst, "carpeta/plano.dwg")
+    make(src, "Carpeta/Plano.dwg")
+    make(dst, "carpeta/Plano.dwg")
     p = plan_for(src, dst)
     assert p.unchanged == 1 and p.is_empty
+
+
+def test_case_only_file_rename_is_a_move_without_review(tmp_path):
+    src, dst = tmp_path / "s", tmp_path / "d"
+    make(src, "leeme.TXT")
+    make(dst, "LEEME.txt")
+    p = plan_for(src, dst)
+    assert [(o.rel, n.rel) for o, n in p.moved] == [("LEEME.txt", "leeme.TXT")]
+    assert not p.new and not p.deleted and p.review_count == 0
+
+
+def test_review_items_cover_modified_and_ambiguous_twins(tmp_path):
+    src, dst = tmp_path / "s", tmp_path / "d"
+    make(src, "mod.txt", b"longer")
+    make(dst, "mod.txt", b"x")
+    make(src, "x/a.txt", b"same", mtime=1_650_000_000)
+    make(src, "x/b.txt", b"same", mtime=1_650_000_000)
+    make(dst, "y/a.txt", b"same", mtime=1_650_000_000)
+    make(dst, "y/b.txt", b"same", mtime=1_650_000_000)
+    p = plan_for(src, dst)
+    assert p.review_count == 3  # 1 modified + 2 ambiguous new files
+    items = p.review_items()
+    assert [k for k, _, _ in items].count("Modificado") == 1
+    assert [k for k, _, _ in items].count("Gemelo") == 4  # each twin lists both candidates
+    assert all(d.rel for _, _, d in items)
+
+
+def test_clean_plan_needs_no_review(tmp_path):
+    src, dst = tmp_path / "s", tmp_path / "d"
+    make(src, "viejo.txt")
+    make(src, "nuevo.txt", b"zz")
+    make(dst, "viejo.txt")
+    assert plan_for(src, dst).review_count == 0
 
 
 def test_archive_dir_ignored_in_dest(tmp_path):

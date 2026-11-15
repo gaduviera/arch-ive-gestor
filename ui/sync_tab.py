@@ -10,6 +10,7 @@ from tkinter import filedialog, messagebox, ttk
 
 from core.executor import check_space, execute
 from core.mirrors import MirrorStore, new_mirror, warnings
+from core.review import diff_text, is_text
 from core.sync import ARCHIVE_DIR, DEFAULT_EXCLUDES, SyncError, analyze
 from ui.theme import COLORS
 
@@ -79,6 +80,7 @@ class SyncTab(tk.Frame):
         self.store, self.history, self.on_history = store, history, on_history
         self.plans: dict[str, object] = {}        # mirror name -> fresh Plan
         self.batch_errors: dict[str, str] = {}
+        self.reviewed: set[str] = set()           # mirrors whose doubtful files the user already looked at
         self._q: queue.Queue = queue.Queue()
         self._cancel = threading.Event()
         self._busy = False
@@ -165,7 +167,9 @@ class SyncTab(tk.Frame):
         self.btn_analyze.pack(side="left")
         self.btn_detail = button(btns, "Ver detalle", self.show_detail)
         self.btn_detail.pack(side="left", padx=6)
-        self.btn_run = button(btns, "Sincronizar", self.run_selected, primary=True)
+        self.btn_review = button(btns, "Revisar", self.show_review)
+        self.btn_review.pack(side="left", padx=(0, 6))
+        self.btn_run =button(btns, "Sincronizar", self.run_selected, primary=True)
         self.btn_run.pack(side="left")
         self.btn_cancel = button(btns, "Cancelar", self._cancel.set)
         button(btns, "Abrir archivo", self.open_archive).pack(side="right")
@@ -265,6 +269,7 @@ class SyncTab(tk.Frame):
         if not self.store.pinned():
             self.btn_batch.config(state="disabled")
         self.btn_detail.config(state=idle if has_plan else "disabled")
+        self.btn_review.config(state=idle if has_plan and self.plans[m["name"]].review_count else "disabled")
         self.btn_run.config(state=idle if has_plan and not self.plans[m["name"]].is_empty else "disabled")
         if self._busy:
             self.btn_cancel.pack(side="left", padx=6)
@@ -364,6 +369,7 @@ class SyncTab(tk.Frame):
                 self.write(f"✘ {name}: {err}", "err")
                 continue
             self.batch_errors.pop(name, None)
+            self.reviewed.discard(name)  # new plan, new review
             self.plans[name] = plan
             self.store.record(name, summary=plan.counts())
             c = plan.counts()
@@ -435,6 +441,19 @@ class SyncTab(tk.Frame):
             self._start(self._analyze_worker, pinned, True)
 
     def confirm(self, jobs: list[tuple[dict, object]]) -> bool:
+        doubtful = [(m, p) for m, p in jobs if p.review_count and m["name"] not in self.reviewed]
+        if doubtful:
+            lines = [f"• {m['name']}: {p.review_count} archivos" for m, p in doubtful]
+            if not messagebox.askyesno(
+                    "Archivos para revisar",
+                    "Hay archivos dudosos (modificados, cuya versión vieja va a _archivo/, o gemelos que no se "
+                    "pueden emparejar):\n" + "\n".join(lines) +
+                    "\n\n¿Continuar sin revisar?\nElegí «No» para verlos antes de sincronizar.",
+                    icon="warning", parent=self):
+                m, p = doubtful[0]
+                self.reviewed.add(m["name"])
+                ReviewDialog(self, m, p)
+                return False
         lines, risky = [], []
         for m, plan in jobs:
             c = plan.counts()
@@ -474,6 +493,12 @@ class SyncTab(tk.Frame):
             self._start(self._run_worker, jobs)
             return True
         return False
+
+    def show_review(self):
+        m = self.selected()
+        if m and m["name"] in self.plans:
+            self.reviewed.add(m["name"])
+            ReviewDialog(self, m, self.plans[m["name"]])
 
     def show_detail(self):
         m = self.selected()
@@ -679,3 +704,100 @@ class DetailDialog(tk.Toplevel):
             self.tree.insert("", "end", text=r[1], values=(r[0], fmt_bytes(r[2])))
         more = f" (mostrando {self.LIMIT:,})" if len(rows) > self.LIMIT else ""
         self.lbl.config(text=f"{len(rows):,} archivos{more}")
+
+
+class ReviewDialog(tk.Toplevel):
+    """Doubtful files: show both paths, open them, or diff plain text in place."""
+
+    def __init__(self, tab: SyncTab, mirror: dict, plan):
+        super().__init__(tab)
+        self.source, self.dest = mirror["source"], mirror["dest"]
+        self.items = plan.review_items()
+        self.title(f"Revisar — {mirror['name']}")
+        self.configure(bg=C_BG, padx=14, pady=12)
+        self.geometry("980x640")
+        tk.Label(self, text=f"{len(self.items):,} archivos para revisar. Cerrá esta ventana y sincronizá "
+                            "cuando estés conforme; nada se borra, lo reemplazado va a _archivo/.",
+                 font=F_LABEL, fg=C_TEXT, bg=C_BG, anchor="w", justify="left", wraplength=940).pack(fill="x")
+
+        frame = tk.Frame(self, bg=C_BG)
+        frame.pack(fill="both", expand=True, pady=8)
+        sb = ttk.Scrollbar(frame)
+        sb.pack(side="right", fill="y")
+        self.tree = ttk.Treeview(frame, style="Arch.Treeview", columns=("kind", "src", "dst"),
+                                 yscrollcommand=sb.set, height=9)
+        sb.config(command=self.tree.yview)
+        for col, text, w in (("#0", "Archivo (destino)", 480), ("kind", "Tipo", 90),
+                             ("src", "Origen", 190), ("dst", "Destino", 190)):
+            self.tree.heading(col, text=text)
+            self.tree.column(col, width=w)
+        for i, (kind, s, d) in enumerate(self.items):
+            self.tree.insert("", "end", iid=str(i), text=d.rel,
+                             values=(kind, self._meta(s), self._meta(d)))
+        self.tree.pack(fill="both", expand=True)
+        self.tree.bind("<<TreeviewSelect>>", lambda e: self._select())
+
+        self.v_src, self.v_dst = tk.StringVar(), tk.StringVar()
+        for label, var in (("Origen:", self.v_src), ("Destino:", self.v_dst)):
+            row = tk.Frame(self, bg=C_BG)
+            row.pack(fill="x", pady=2)
+            tk.Label(row, text=label, font=F_LABEL, fg=C_MUTED, bg=C_BG, width=8, anchor="w").pack(side="left")
+            tk.Entry(row, textvariable=var, state="readonly", font=F_MONO, readonlybackground=C_PANEL,
+                     fg=C_TEXT, relief="flat", bd=4).pack(side="left", fill="x", expand=True)
+        btns = tk.Frame(self, bg=C_BG)
+        btns.pack(fill="x", pady=6)
+        self.b_src = button(btns, "Abrir origen", lambda: self._open(self.v_src.get()))
+        self.b_dst = button(btns, "Abrir destino", lambda: self._open(self.v_dst.get()))
+        self.b_dir = button(btns, "Abrir carpeta del destino",
+                            lambda: self._open(os.path.dirname(self.v_dst.get())))
+        for b in (self.b_src, self.b_dst, self.b_dir):
+            b.pack(side="left", padx=(0, 6))
+            b.config(state="disabled")
+        button(btns, "Cerrar", self.destroy, primary=True).pack(side="right")
+
+        self.txt = tk.Text(self, height=12, font=F_MONO, bg=C_PANEL, fg=C_TEXT, relief="flat", bd=4,
+                           wrap="none", state="disabled")
+        self.txt.tag_config("add", foreground=C_OK)
+        self.txt.tag_config("del", foreground=C_ERR)
+        self.txt.pack(fill="both", expand=True)
+        self._show("Elegí un archivo para ver sus rutas y compararlo.")
+        if self.items:
+            self.tree.selection_set("0")
+
+    @staticmethod
+    def _meta(f) -> str:
+        return f"{fmt_bytes(f.size)} · {datetime.fromtimestamp(f.mtime):%Y-%m-%d %H:%M}"
+
+    def _show(self, text: str):
+        self.txt.config(state="normal")
+        self.txt.delete("1.0", "end")
+        for line in text.splitlines(True):
+            tag = "add" if line.startswith("+") and not line.startswith("+++") else \
+                  "del" if line.startswith("-") and not line.startswith("---") else None
+            self.txt.insert("end", line, tag)
+        self.txt.config(state="disabled")
+
+    def _select(self):
+        sel = self.tree.selection()
+        if not sel:
+            return
+        _, s, d = self.items[int(sel[0])]
+        sp, dp = os.path.join(self.source, *s.rel.split("/")), os.path.join(self.dest, *d.rel.split("/"))
+        self.v_src.set(sp)
+        self.v_dst.set(dp)
+        for b in (self.b_src, self.b_dst, self.b_dir):
+            b.config(state="normal")
+        if is_text(sp) and is_text(dp):
+            try:
+                self._show(diff_text(dp, sp) or "Contenido idéntico.")
+            except OSError as exc:
+                self._show(f"No se pudo leer: {exc}")
+        else:
+            self._show("Sin vista previa para este tipo de archivo. Usá «Abrir origen» y «Abrir destino» "
+                       "para compararlos con tu programa.")
+
+    def _open(self, path: str):
+        try:
+            os.startfile(path)
+        except OSError as exc:
+            messagebox.showerror("No se pudo abrir", str(exc), parent=self)

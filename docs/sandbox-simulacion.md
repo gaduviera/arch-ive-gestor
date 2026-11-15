@@ -34,11 +34,12 @@ Para verlo en la UI, crea un espejo apuntando a `sandbox/origen` → `sandbox/de
 | 1 | Renombrar archivo, mover archivo, borrar uno, crear uno, modificar uno | 1 nuevo, 1 modificado, 2 movidos sin copiar, 1 borrado. Versión vieja y borrado van a `_archivo/<fecha>/` |
 | 2 | Renombrar carpetas completas (`01_WIP` → `01_WIP_2026`, `Planos` → `Planos_Emitidos`) | 7 movidos, 0 bytes copiados (22 MB ahorrados) |
 | 3 | Dos archivos gemelos (mismo tamaño y mtime), luego renombrar ambos | Ambiguo: no adivina. 2 nuevos + 2 archivados |
-| 3 | Cambiar solo mayúsculas (`LEEME.txt` → `leeme.TXT`) | Sin cambios; el destino conserva el nombre antiguo |
+| 3 | Cambiar solo mayúsculas (`LEEME.txt` → `leeme.TXT`) | Era «sin cambios». Ahora se detecta como renombre y se aplica en el destino (0 bytes, sin archivar). Solo el nombre del archivo; mayúsculas de carpetas no se propagan |
 
 ## Hallazgos
 
-- Cambio solo de mayúsculas no se propaga (comparación por `rel.lower()`). Aceptable en Windows; decisión pendiente.
+- Cambio solo de mayúsculas en el nombre del archivo: **corregido** (renombre en dos pasos vía temporal). Carpetas: no se propagan, aceptable en Windows.
+- Revisión previa: si el plan tiene archivos dudosos (modificados o gemelos ambiguos), «Sincronizar» pregunta antes; «Revisar» muestra rutas de origen y destino, botones para abrirlos y diff de texto plano en la ventana (`core/review.py`).
 - ~~Modificado + cancelado o con error de copia dejaba el archivo ausente del destino~~ **Corregido (2026-11-15):**
   el executor copia primero a `.archive-tmp` y archiva la versión vieja justo antes del `os.replace`. Si falla o se
   cancela, la versión vieja sigue en su sitio. Tests: `test_failed_copy_of_modified_keeps_old_version_in_place`,
