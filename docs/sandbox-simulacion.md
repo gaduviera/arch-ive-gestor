@@ -12,6 +12,7 @@ python tools/sandbox.py mutate 1|2|3 # aplica un escenario de cambios al origen
 python tools/sandbox.py analyze      # muestra el plan sin tocar nada
 python tools/sandbox.py sync         # aplica el plan
 python tools/sandbox.py tree destino # lista archivos
+python tools/sandbox.py stress       # casos extremos A-G, cada uno sobre un sandbox nuevo
 ```
 
 No usa la UI ni `%APPDATA%\Arch-Ive` (no toca tus espejos ni el historial reales).
@@ -38,4 +39,20 @@ Para verlo en la UI, crea un espejo apuntando a `sandbox/origen` → `sandbox/de
 ## Hallazgos
 
 - Cambio solo de mayúsculas no se propaga (comparación por `rel.lower()`). Aceptable en Windows; decisión pendiente.
-- Escenarios no cubiertos: archivos bloqueados, rutas > 240 caracteres, origen desconectado, >30 % a archivo, cancelar a mitad.
+- Modificado + cancelado o con error de copia: la versión vieja ya fue a `_archivo/` y la nueva aún no llegó, así que
+  el archivo falta en `destino` hasta el siguiente sync (que lo recupera como «nuevo»). Nada se pierde, pero hay una
+  ventana. Mejora posible: copiar a `.archive-tmp` primero y archivar la vieja justo antes del `os.replace`.
+
+## Casos extremos (`stress`, 2026-11-15)
+
+| Caso | Resultado |
+|---|---|
+| A Origen desconectado | `SyncError: Origen no disponible`, no analiza |
+| B Origen vacío | `SyncError: El origen está vacío` |
+| C 6 de 14 a archivo (43 %) | Plan marca 6; la UI pide confirmación extra (>30 %). Los 6 quedan en `_archivo/` |
+| D Cancelar tras 5 pasos | `cancelled=True`, sin `.archive-tmp` sueltos; re-sync converge a 0 pendientes |
+| E Ruta de 323 caracteres | Copiada sin error (prefijo `\?\`) |
+| F Archivo bloqueado en origen | 13 copiados, 1 error legible, sin temporales; el resto sigue |
+| G Subcarpeta sin permiso de lectura | `scan_errors=1`, `kept=2`, `deleted=0`: no archiva lo de esa carpeta |
+
+No cubierto: Google Drive real, volúmenes grandes, disco lleno a mitad.

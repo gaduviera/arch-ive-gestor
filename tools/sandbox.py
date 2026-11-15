@@ -6,6 +6,7 @@ applies source changes, and runs analyze/sync with the real engine (no UI, no AP
   python tools/sandbox.py analyze          # show plan (no changes)
   python tools/sandbox.py sync             # apply plan
   python tools/sandbox.py tree [origen|destino]
+  python tools/sandbox.py stress           # extreme cases A-G, each on a fresh sandbox
 """
 import os
 import shutil
@@ -99,6 +100,78 @@ def mutate(n):
         os.rename(os.path.join(SRC, "LEEME.txt"), os.path.join(SRC, "leeme.TXT"))
 
 
+def stress():
+    import contextlib
+    import io
+    import subprocess
+    import threading
+    from core.sync import SyncError
+
+    def fresh():
+        with contextlib.redirect_stdout(io.StringIO()):
+            build()
+
+    def leftovers():
+        return [os.path.join(d, f) for d, _, fs in os.walk(DST) for f in fs if f.endswith(".archive-tmp")]
+
+    print("A origen desconectado")
+    fresh(); shutil.move(SRC, SRC + "_off")
+    try: analyze(mirror()); print("  FALLO: no avisó")
+    except SyncError as e: print("  OK SyncError:", e)
+
+    print("B origen vacio")
+    fresh(); shutil.rmtree(SRC); os.makedirs(SRC)
+    try: analyze(mirror()); print("  FALLO: no avisó")
+    except SyncError as e: print("  OK SyncError:", e)
+
+    print("C >30% a archivo (borro 6 de 14 en origen)")
+    fresh()
+    for rel, _ in FILES[:6]: os.remove(os.path.join(SRC, rel))
+    plan = analyze(mirror()); n = len(plan.deleted)
+    print(f"  deleted={n} ratio={n/14:.0%} (UI pide confirmacion extra si >30%)")
+    r = execute(plan, SRC, DST)
+    print("  archived=%d, en _archivo=%d" % (r.archived, sum(len(f) for _, _, f in os.walk(os.path.join(DST, "_archivo")))))
+
+    print("D cancelar a mitad")
+    fresh()
+    for rel, size in FILES: put(rel, size + 1, rel + "v2")  # todo modificado
+    plan = analyze(mirror()); ev = threading.Event()
+    r = execute(plan, SRC, DST, on_progress=lambda d, t, rel: ev.set() if d == 5 else None, cancel=ev)
+    print(f"  cancelled={r.cancelled} copied={r.copied} archived={r.archived} .archive-tmp sueltos={len(leftovers())}")
+    p2 = analyze(mirror()); print("  re-analisis tras cancelar:", p2.counts())
+    r = execute(p2, SRC, DST); p3 = analyze(mirror())
+    print(f"  re-sync converge: pendientes={p3.counts()['new'] + p3.counts()['modified']}, errores={r.errors}")
+
+    print("E ruta larga (>260 chars)")
+    fresh(); deep = os.path.join(*["carpeta_muy_larga_%02d_xxxxxxxxxxxx" % i for i in range(9)])
+    rel = deep.replace(os.sep, "/") + "/archivo_final.dwg"; print("  largo rel:", len(rel))
+    from core.executor import _long; p = _long(os.path.join(SRC, rel.replace("/", os.sep))); os.makedirs(os.path.dirname(p))
+    open(p, "wb").write(b"x" * 1000)
+    plan = analyze(mirror()); r = execute(plan, SRC, DST)
+    print("  new=%d copied=%d errores=%s" % (len(plan.new), r.copied, r.errors))
+
+    print("F archivo bloqueado (lectura bloqueada en origen)")
+    fresh()
+    for rel, size in FILES: put(rel, size + 1, rel + "v3")
+    import msvcrt
+    f = open(os.path.join(SRC, FILES[3][0]), "r+b")
+    msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1000)
+    plan = analyze(mirror()); r = execute(plan, SRC, DST)
+    print(f"  copied={r.copied} errores={len(r.errors)}", r.errors[:1], "tmp sueltos=", len(leftovers()))
+    f.close()
+
+    print("G subcarpeta del origen sin permiso")
+    fresh(); sub = os.path.join(SRC, "02_COMPARTIDO")
+    user = os.environ["USERNAME"]
+    subprocess.run(["icacls", sub, "/deny", f"{user}:(OI)(CI)(RX)"], capture_output=True)
+    try:
+        plan = analyze(mirror())
+        print(f"  deleted={len(plan.deleted)} kept={len(plan.kept)} scan_errors={len(plan.scan_errors)} (archivos de destino bajo esa carpeta NO deben archivarse)")
+    finally:
+        subprocess.run(["icacls", sub, "/remove:d", user], capture_output=True)
+        subprocess.run(["icacls", sub, "/reset", "/t"], capture_output=True)
+
+
 def tree(which):
     root = DST if which == "destino" else SRC
     for d, dirs, fs in os.walk(root):
@@ -110,5 +183,5 @@ def tree(which):
 if __name__ == "__main__":
     c = sys.argv[1:] or ["-h"]
     {"build": build, "analyze": lambda: show(analyze(mirror())), "sync": sync,
-     "mutate": lambda: mutate(int(c[1])), "tree": lambda: tree(c[1] if len(c) > 1 else "origen")
+     "stress": stress, "mutate": lambda: mutate(int(c[1])), "tree": lambda: tree(c[1] if len(c) > 1 else "origen")
      }.get(c[0], lambda: print(__doc__))()
