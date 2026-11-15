@@ -39,9 +39,10 @@ Para verlo en la UI, crea un espejo apuntando a `sandbox/origen` → `sandbox/de
 ## Hallazgos
 
 - Cambio solo de mayúsculas no se propaga (comparación por `rel.lower()`). Aceptable en Windows; decisión pendiente.
-- Modificado + cancelado o con error de copia: la versión vieja ya fue a `_archivo/` y la nueva aún no llegó, así que
-  el archivo falta en `destino` hasta el siguiente sync (que lo recupera como «nuevo»). Nada se pierde, pero hay una
-  ventana. Mejora posible: copiar a `.archive-tmp` primero y archivar la vieja justo antes del `os.replace`.
+- ~~Modificado + cancelado o con error de copia dejaba el archivo ausente del destino~~ **Corregido (2026-11-15):**
+  el executor copia primero a `.archive-tmp` y archiva la versión vieja justo antes del `os.replace`. Si falla o se
+  cancela, la versión vieja sigue en su sitio. Tests: `test_failed_copy_of_modified_keeps_old_version_in_place`,
+  `test_cancel_midway_leaves_unprocessed_modified_in_place`.
 
 ## Casos extremos (`stress`, 2026-11-15)
 
@@ -50,9 +51,9 @@ Para verlo en la UI, crea un espejo apuntando a `sandbox/origen` → `sandbox/de
 | A Origen desconectado | `SyncError: Origen no disponible`, no analiza |
 | B Origen vacío | `SyncError: El origen está vacío` |
 | C 6 de 14 a archivo (43 %) | Plan marca 6; la UI pide confirmación extra (>30 %). Los 6 quedan en `_archivo/` |
-| D Cancelar tras 5 pasos | `cancelled=True`, sin `.archive-tmp` sueltos; re-sync converge a 0 pendientes |
+| D Cancelar tras 5 pasos | `cancelled=True`, sin `.archive-tmp` sueltos; los 9 pendientes conservan su versión vieja; re-sync converge a 0 |
 | E Ruta de 323 caracteres | Copiada sin error (prefijo `\?\`) |
-| F Archivo bloqueado en origen | 13 copiados, 1 error legible, sin temporales; el resto sigue |
+| F Archivo bloqueado en origen | 13 copiados, 1 error legible, sin temporales; el archivo bloqueado conserva su versión vieja en destino |
 | G Subcarpeta sin permiso de lectura | `scan_errors=1`, `kept=2`, `deleted=0`: no archiva lo de esa carpeta |
 
 No cubierto: Google Drive real, volúmenes grandes, disco lleno a mitad.

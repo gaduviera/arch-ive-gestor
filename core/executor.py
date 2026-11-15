@@ -1,6 +1,8 @@
 """Apply a sync Plan to the destination folder.
 
-Order: moves -> archive (deleted + old versions of modified) -> copies.
+Order: moves -> archive deleted -> copies. A modified file is copied to a temp name
+first; its old version is archived only right before the swap, so a failed or
+cancelled run never leaves the destination without a copy.
 Nothing is ever deleted: files leaving the destination go to
 dest/_archivo/<YYYY-MM-DD>/<relpath>. Copies are written to a temp name and
 renamed, so a cancelled or crashed run never leaves a half-written file.
@@ -82,8 +84,7 @@ def execute(plan: Plan, source: str, dest: str, on_progress=None, cancel=None) -
     res = RunResult()
     started = time.monotonic()
     archive_root = os.path.join(dest, ARCHIVE_DIR, date.today().isoformat())
-    archive_items = list(plan.deleted) + [d for _, d in plan.modified]
-    total = len(plan.moved) + len(archive_items) + len(plan.new) + len(plan.modified)
+    total = len(plan.moved) + len(plan.deleted) + len(plan.new) + len(plan.modified)
     done = 0
     emptied: set[str] = set()
 
@@ -117,7 +118,7 @@ def execute(plan: Plan, source: str, dest: str, on_progress=None, cancel=None) -
             res.errors.append(f"Mover {old.rel} -> {new.rel}: {exc}")
         step(new.rel)
 
-    for f in archive_items:
+    for f in plan.deleted:
         if stopped():
             break
         try:
@@ -129,19 +130,31 @@ def execute(plan: Plan, source: str, dest: str, on_progress=None, cancel=None) -
             res.errors.append(f"Archivar {f.rel}: {exc}")
         step(f.rel)
 
+    olds = {s.rel: d for s, d in plan.modified}
     for f in list(plan.new) + [s for s, _ in plan.modified]:
         if stopped():
             break
         target = _join(dest, f.rel)
         tmp = target + TMP_SUFFIX
+        archived_to = None
         try:
             os.makedirs(_long(os.path.dirname(target)), exist_ok=True)
             shutil.copy2(_long(_join(source, f.rel)), _long(tmp))
+            if f.rel in olds:  # archive the old version only now that the new one is safe
+                archived_to = _free_target(_join(archive_root, f.rel))
+                _move(target, archived_to)
             os.replace(_long(tmp), _long(target))
+            if archived_to:
+                res.archived += 1
             res.copied += 1
             res.bytes_copied += f.size
         except OSError as exc:
             res.errors.append(f"Copiar {f.rel}: {exc}")
+            if archived_to and not os.path.exists(_long(target)):
+                try:  # swap failed after archiving: put the old version back
+                    _move(archived_to, target)
+                except OSError:
+                    pass
             try:
                 os.remove(_long(tmp))
             except OSError:

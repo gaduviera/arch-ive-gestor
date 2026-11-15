@@ -113,3 +113,30 @@ def test_check_space(tmp_path):
     src, dst = tmp_path / "s", tmp_path / "d"
     make(src, "a.txt")
     assert check_space(analyze(mirror(src, dst)), str(dst))
+
+
+def test_failed_copy_of_modified_keeps_old_version_in_place(tmp_path):
+    src, dst = tmp_path / "s", tmp_path / "d"
+    make(src, "doc.txt", b"version 2", mtime=1_700_000_100)
+    make(dst, "doc.txt", b"v1", mtime=1_700_000_000)
+    m = mirror(src, dst)
+    plan = analyze(m)
+    os.remove(src / "doc.txt")  # source vanishes between analyze and sync
+    res = execute(plan, m["source"], m["dest"])
+    assert len(res.errors) == 1 and res.copied == 0 and res.archived == 0
+    assert read(dst / "doc.txt") == b"v1"
+    assert not archive_root(dst).exists()
+    assert not any(n.endswith(".archive-tmp") for n in os.listdir(dst))
+
+
+def test_cancel_midway_leaves_unprocessed_modified_in_place(tmp_path):
+    src, dst = tmp_path / "s", tmp_path / "d"
+    for n in "abc":
+        make(src, f"{n}.txt", b"new!", mtime=1_700_000_100)
+        make(dst, f"{n}.txt", b"old", mtime=1_700_000_000)
+    m = mirror(src, dst)
+    ev = threading.Event()
+    res = execute(analyze(m), m["source"], m["dest"],
+                  on_progress=lambda d, t, rel: ev.set(), cancel=ev)
+    assert res.cancelled and res.copied == 1
+    assert sorted(os.listdir(dst)) == ["_archivo", "a.txt", "b.txt", "c.txt"]
