@@ -186,14 +186,15 @@ class BarChart(tk.Canvas):
             self.create_rectangle(x0, y0, x1, y1, fill=color, outline="", tags="chart")
 
             cx = (x0 + x1) / 2
-            self.create_text(
-                cx,
-                y0 - 4,
-                text=f"{v:.1f}",
-                font=("Segoe UI", 8),
-                fill="#F5F5F5",
-                tags="chart",
-            )
+            if v:  # no value label on empty bars
+                self.create_text(
+                    cx,
+                    y0 - 4,
+                    text=f"{v:g}",
+                    font=("Segoe UI", 8),
+                    fill="#F5F5F5",
+                    tags="chart",
+                )
 
             if self.labels and i < len(self.labels):
                 self.create_text(

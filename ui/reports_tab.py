@@ -87,7 +87,7 @@ class ReportsTab(tk.Frame):
         tk.Label(left, text="Actividad mensual", font=FONT_LABEL,
                  fg=_MUTED, bg=_PANEL).pack(anchor="w", padx=8, pady=(6, 0))
 
-        self._heatmap = HeatmapCanvas(left, width=240, height=200)
+        self._heatmap = HeatmapCanvas(left, width=240, height=250)
         self._heatmap.pack(padx=8, pady=8)
 
         # Right: monthly totals bar chart
@@ -97,7 +97,7 @@ class ReportsTab(tk.Frame):
         tk.Label(right, text="Backups por mes (año actual)", font=FONT_LABEL,
                  fg=_MUTED, bg=_PANEL).pack(anchor="w", padx=8, pady=(6, 0))
 
-        self._bar_chart = BarChart(right, width=320, height=200)
+        self._bar_chart = BarChart(right, width=420, height=250)
         self._bar_chart.pack(padx=8, pady=8)
 
         # ── Stats row ─────────────────────────────────────────────────────────
