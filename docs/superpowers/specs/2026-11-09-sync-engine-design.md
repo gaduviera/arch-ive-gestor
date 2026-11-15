@@ -1,6 +1,6 @@
 # Arch-Ive — Sync engine con detección de cambios
 
-Fecha: 2026-11-09 (rev. 2026-11-15: espejos fijables) · Estado: pendiente de revisión del spec
+Fecha: 2026-11-09 (rev. 2026-11-15: espejos fijables) · Estado: implementado (rama feat/sync-engine)
 
 ## Propósito
 
@@ -103,7 +103,7 @@ completo; remote `origin` = `github.com/gaduviera/arch-ive-gestor`.
 main.py
 core/                 # lógica pura, sin tkinter
   paths.py            # %APPDATA%\Arch-Ive
-  mirrors.py          # espejos (CRUD, fijar, validación) + migración de config.json viejo
+  mirrors.py          # espejos (CRUD, fijar, validación); la lista arranca vacía
   sync.py             # escanear + planificar
   executor.py         # aplicar plan
   history.py          # ex reports_engine.py (historial + cálculos)
@@ -140,8 +140,8 @@ Se eliminan: `backup_engine.py`, `components/frost_card.py`, `glass_button.py`,
 `mode`: `"mirror"` (Espejo) | `"add_only"` (Solo agregar).
 `last_summary`: conteos del último análisis/ejecución, para mostrar estado en la lista.
 
-Migración: si existe `config.json` viejo y no `mirrors.json`, se crea el espejo
-"Principal" (modo Espejo, fijado) con `source_path`/`dest_path`.
+Sin migración (decisión 2026-11-15): la lista arranca vacía y cada par se crea
+a mano con «Nuevo espejo». El `config.json` viejo se ignora.
 
 Historial (`logs/backup_history.json`), un evento por espejo ejecutado:
 `mirror, mode, new, modified, moved, archived, errors, bytes_copied, duration_s`.
@@ -174,7 +174,7 @@ total general, botón **Sincronizar todos**; progreso indica espejo actual y arc
   exclusiones, tolerancia de mtime, mayúsculas.
 - Ejecutor: aplica plan; segunda corrida = plan vacío; archivado con sufijo en colisión;
   carpetas vacías limpiadas.
-- Espejos: CRUD, fijar, migración de config viejo, validación de rutas anidadas y
+- Espejos: CRUD, fijar, renombrar, archivo corrupto, validación de rutas anidadas y
   destinos solapados entre espejos.
 - Modo Solo agregar: huérfanos sin pareja no se archivan.
 - Lote: un espejo inválido se salta sin frenar a los demás.
