@@ -13,19 +13,19 @@ def tmp_log(tmp_path):
 
 class TestBackupHistoryManager:
     def test_init_creates_empty_history(self, tmp_log):
-        from reports_engine import BackupHistoryManager
+        from core.history import BackupHistoryManager
         mgr = BackupHistoryManager(tmp_log)
         assert mgr._history == []
 
     def test_append_adds_timestamp(self, tmp_log):
-        from reports_engine import BackupHistoryManager
+        from core.history import BackupHistoryManager
         mgr = BackupHistoryManager(tmp_log)
         mgr.append_event({"files_copied": 5})
         assert len(mgr._history) == 1
         assert "timestamp" in mgr._history[0]
 
     def test_append_persists_to_disk(self, tmp_log):
-        from reports_engine import BackupHistoryManager
+        from core.history import BackupHistoryManager
         mgr = BackupHistoryManager(tmp_log)
         mgr.append_event({"action": "backup"})
         with open(tmp_log, "r") as f:
@@ -34,21 +34,21 @@ class TestBackupHistoryManager:
         assert data[0]["action"] == "backup"
 
     def test_reload_from_disk(self, tmp_log):
-        from reports_engine import BackupHistoryManager
+        from core.history import BackupHistoryManager
         mgr1 = BackupHistoryManager(tmp_log)
         mgr1.append_event({"x": 1})
         mgr2 = BackupHistoryManager(tmp_log)
         assert len(mgr2._history) == 1
 
     def test_get_events_no_filter_returns_all(self, tmp_log):
-        from reports_engine import BackupHistoryManager
+        from core.history import BackupHistoryManager
         mgr = BackupHistoryManager(tmp_log)
         mgr.append_event({"n": 1})
         mgr.append_event({"n": 2})
         assert len(mgr.get_events()) == 2
 
     def test_get_events_date_filter(self, tmp_log):
-        from reports_engine import BackupHistoryManager
+        from core.history import BackupHistoryManager
         mgr = BackupHistoryManager(tmp_log)
         mgr._history = [
             {"timestamp": "2026-01-10T10:00:00", "n": 1},
@@ -63,7 +63,7 @@ class TestBackupHistoryManager:
         assert result[0]["n"] == 2
 
     def test_get_summary_empty(self, tmp_log):
-        from reports_engine import BackupHistoryManager
+        from core.history import BackupHistoryManager
         mgr = BackupHistoryManager(tmp_log)
         s = mgr.get_summary()
         assert s["total_events"] == 0
@@ -71,7 +71,7 @@ class TestBackupHistoryManager:
         assert s["last_event"] is None
 
     def test_get_summary_counts(self, tmp_log):
-        from reports_engine import BackupHistoryManager
+        from core.history import BackupHistoryManager
         mgr = BackupHistoryManager(tmp_log)
         mgr._history = [
             {"timestamp": "2026-01-01T00:00:00"},
@@ -86,7 +86,7 @@ class TestBackupHistoryManager:
 class TestReportsCalculator:
     @pytest.fixture
     def hm_with_data(self, tmp_log):
-        from reports_engine import BackupHistoryManager
+        from core.history import BackupHistoryManager
         mgr = BackupHistoryManager(tmp_log)
         mgr._history = [
             {"timestamp": "2026-03-01T10:00:00", "files": 10},
@@ -98,7 +98,7 @@ class TestReportsCalculator:
         return mgr
 
     def test_compute_heatmap_correct_counts(self, hm_with_data):
-        from reports_engine import ReportsCalculator
+        from core.history import ReportsCalculator
         calc = ReportsCalculator(hm_with_data)
         result = calc.compute_heatmap(2026, 3)
         assert result["2026-03-01"] == 2
@@ -106,13 +106,13 @@ class TestReportsCalculator:
         assert "2026-04-10" not in result
 
     def test_compute_heatmap_empty_month(self, hm_with_data):
-        from reports_engine import ReportsCalculator
+        from core.history import ReportsCalculator
         calc = ReportsCalculator(hm_with_data)
         result = calc.compute_heatmap(2025, 1)
         assert result == {}
 
     def test_compute_monthly_totals(self, hm_with_data):
-        from reports_engine import ReportsCalculator
+        from core.history import ReportsCalculator
         calc = ReportsCalculator(hm_with_data)
         result = calc.compute_monthly_totals(2026)
         assert result.get("2026-02") == 1
@@ -121,7 +121,7 @@ class TestReportsCalculator:
         assert "2025-12" not in result
 
     def test_compute_comparison_delta(self, hm_with_data):
-        from reports_engine import ReportsCalculator
+        from core.history import ReportsCalculator
         calc = ReportsCalculator(hm_with_data)
         result = calc.compute_comparison(
             event_key="files",
@@ -136,7 +136,7 @@ class TestReportsCalculator:
         assert abs(result["delta_pct"] - (32/3*100)) < 0.01
 
     def test_compute_comparison_zero_period_a(self, tmp_log):
-        from reports_engine import BackupHistoryManager, ReportsCalculator
+        from core.history import BackupHistoryManager, ReportsCalculator
         mgr = BackupHistoryManager(tmp_log)
         calc = ReportsCalculator(mgr)
         result = calc.compute_comparison(
@@ -147,7 +147,7 @@ class TestReportsCalculator:
         assert result["delta_pct"] == 0.0
 
     def test_recoverable_space(self, tmp_log):
-        from reports_engine import BackupHistoryManager, ReportsCalculator
+        from core.history import BackupHistoryManager, ReportsCalculator
         mgr  = BackupHistoryManager(tmp_log)
         calc = ReportsCalculator(mgr)
         groups = [
@@ -158,7 +158,7 @@ class TestReportsCalculator:
         assert calc.recoverable_space(groups) == 2500
 
     def test_recoverable_space_empty(self, tmp_log):
-        from reports_engine import BackupHistoryManager, ReportsCalculator
+        from core.history import BackupHistoryManager, ReportsCalculator
         mgr  = BackupHistoryManager(tmp_log)
         calc = ReportsCalculator(mgr)
         assert calc.recoverable_space([]) == 0

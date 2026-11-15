@@ -2,9 +2,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from datetime import datetime
-from theme import COLORS
-from reports_ui import HeatmapCanvas, ComparisonCanvas
-from components.chart_canvas import BarChart
+from ui.theme import COLORS
+from ui.widgets import HeatmapCanvas, ComparisonCanvas, BarChart
 
 _BG    = COLORS["carbon_base"]
 _PANEL = COLORS["carbon_elevated"]
@@ -188,7 +187,7 @@ class ReportsTab(tk.Frame):
         )
         if not path:
             return
-        from export_csv import export_events_csv
+        from core.exporters import export_events_csv
         export_events_csv(self._hm.get_events(), filepath=path)
         messagebox.showinfo("Exportado", f"CSV guardado en:\n{path}")
 
@@ -202,14 +201,14 @@ class ReportsTab(tk.Frame):
         )
         if not path:
             return
-        from export_json import export_events_json
+        from core.exporters import export_events_json
         export_events_json(self._hm.get_events(), filepath=path)
         messagebox.showinfo("Exportado", f"JSON guardado en:\n{path}")
 
     def _export_pdf(self):
         if self._hm is None:
             return
-        from export_pdf import is_pdf_available
+        from core.exporters import is_pdf_available
         if not is_pdf_available():
             messagebox.showwarning(
                 "PDF no disponible",
@@ -224,7 +223,7 @@ class ReportsTab(tk.Frame):
         )
         if not path:
             return
-        from export_pdf import export_report_pdf
+        from core.exporters import export_report_pdf
         summary = self._hm.get_summary()
         export_report_pdf(
             title="Arch-Ive — Reporte de Backups",

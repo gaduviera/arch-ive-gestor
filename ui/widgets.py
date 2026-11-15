@@ -1,7 +1,7 @@
-"""Reports UI widgets — HeatmapCanvas and ComparisonCanvas."""
+"""Reports widgets — HeatmapCanvas, ComparisonCanvas and BarChart."""
 import tkinter as tk
 import calendar
-from theme import COLORS
+from ui.theme import COLORS, interpolate_color, gold_gradient
 
 _BG     = COLORS["carbon_base"]
 _PANEL  = COLORS["carbon_elevated"]
@@ -135,3 +135,74 @@ class ComparisonCanvas(tk.Canvas):
                          text=f"Δ {sign}{delta:,.0f}  ({sign}{delta_pct:.1f}%)",
                          fill=_GOLD if delta >= 0 else COLORS["error"],
                          font=("Segoe UI", 10, "bold"), tags="comp")
+
+
+class BarChart(tk.Canvas):
+    def __init__(self, parent, data=None, labels=None, width=400, height=200, **kwargs):
+        self.data = data if data else []
+        self.labels = labels if labels else []
+        super().__init__(
+            parent,
+            bg="#111111",
+            highlightthickness=0,
+            bd=0,
+            width=width,
+            height=height,
+            **kwargs,
+        )
+        self.draw()
+
+    def update_data(self, data, labels=None):
+        self.data = data
+        self.labels = labels if labels else []
+        self.draw()
+
+    def draw(self):
+        self.delete("chart")
+        if not self.data:
+            return
+
+        canvas_width = int(self["width"])
+        canvas_height = int(self["height"])
+        padding_x = 20
+        padding_top = 10
+        padding_bottom = 30
+        n = len(self.data)
+        max_val = max(self.data) if self.data and max(self.data) > 0 else 1
+        usable_width = canvas_width - 2 * padding_x
+        slot_width = usable_width / n
+        bar_width = slot_width * 0.7
+        gap = slot_width * 0.3
+        max_bar_height = (canvas_height - padding_top - padding_bottom) * 0.8
+
+        for i, v in enumerate(self.data):
+            color = interpolate_color("#C6A85E", "#6B5320", i / max(n - 1, 1))
+            bar_height = (v / max_val) * max_bar_height
+            x0 = padding_x + i * slot_width + gap / 2
+            x1 = x0 + bar_width
+            y1 = canvas_height - padding_bottom
+            y0 = y1 - bar_height
+
+            self.create_rectangle(x0, y0, x1, y1, fill=color, outline="", tags="chart")
+
+            cx = (x0 + x1) / 2
+            self.create_text(
+                cx,
+                y0 - 4,
+                text=f"{v:.1f}",
+                font=("Segoe UI", 8),
+                fill="#F5F5F5",
+                tags="chart",
+            )
+
+            if self.labels and i < len(self.labels):
+                self.create_text(
+                    cx,
+                    canvas_height - padding_bottom + 10,
+                    text=self.labels[i],
+                    font=("Segoe UI", 8),
+                    fill="#AAAAAA",
+                    tags="chart",
+                )
+
+
