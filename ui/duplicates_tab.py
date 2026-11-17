@@ -3,7 +3,7 @@ import subprocess
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
-from core.duplicates import DuplicateFinder
+from core.duplicates import DuplicateFinder, archive_copy
 
 C_BG    = "#111111"
 C_PANEL = "#1A1A1A"
@@ -123,6 +123,7 @@ class DuplicatesTab(tk.Frame):
         self._clear_results()
         self._update_summary()
         self.status_var.set("Iniciando escaneo…")
+        self._scan_root = folder
         self._scan_btn.config(state="disabled")
         if not self.finder.start(folder):
             self._scan_btn.config(state="normal")
@@ -233,7 +234,7 @@ class DuplicatesTab(tk.Frame):
 
             foot = tk.Frame(body, bg=C_PANEL)
             foot.pack(fill="x", pady=(6, 0))
-            del_btn = tk.Button(foot, text="Eliminar seleccionados",
+            del_btn = tk.Button(foot, text="Quitar seleccionados (a _archivo)",
                                 command=lambda i=idx: self._delete_selected(i),
                                 font=FONT_BTN, bg=C_PANEL,
                                 relief="solid", bd=1, padx=10, pady=5,
@@ -305,22 +306,26 @@ class DuplicatesTab(tk.Frame):
                      if self.selection_vars.get(p) and self.selection_vars[p].get()]
         if not to_delete:
             return
+        if len(to_delete) == len(group["paths"]):
+            messagebox.showwarning("Duplicados", "Dejá al menos una copia sin marcar.")
+            return
+        archive = os.path.join(self._scan_root, "_archivo")
         if not messagebox.askyesno(
-            "Eliminar archivos",
-            f"¿Eliminar {len(to_delete)} archivo(s)? Esta acción no se puede deshacer."
+            "Quitar copias",
+            f"¿Quitar {len(to_delete)} copia(s)?\n\nNo se borran: se mueven a\n{archive}"
         ):
             return
 
         failed = []
         for path in to_delete:
             try:
-                os.remove(path)
+                archive_copy(path, self._scan_root)
                 self.selection_vars.pop(path, None)
             except OSError:
                 failed.append(path)
 
         if failed:
-            messagebox.showerror("Duplicados", f"No se pudieron eliminar {len(failed)} archivo(s).")
+            messagebox.showerror("Duplicados", f"No se pudieron mover {len(failed)} archivo(s).")
 
         remaining = [p for p in group["paths"] if p not in to_delete or p in failed]
         self.expanded_groups.discard(orig_gid)
